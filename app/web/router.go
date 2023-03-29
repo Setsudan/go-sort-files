@@ -37,6 +37,8 @@ func router() {
 	// router.POST("/dispatch", dispatch)
 
 	// serve the categories
+	// all the categories are on a json file
+	// in the images/categories/all_categories.json
 	// router.GET("/images/categories", categories)
 
 	// serve the images from a category
