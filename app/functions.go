@@ -33,7 +33,7 @@ func initApp() {
 }
 
 /**
- * createCategory will create a folder for a category and add the category to the all_categories.json file.
+ * createCategory will create a folder for a category
  * - category - the name of the category
  */
 func CreateCategory(category string) {
@@ -42,15 +42,6 @@ func CreateCategory(category string) {
 		os.Mkdir("images/categories/"+category, 0755)
 	}
 
-	file, err := os.OpenFile("images/categories/all_categories.json", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	file.WriteString("\"" + category + "\",\n")
-
-	file.Close()
-
 }
 
 /**
@@ -58,20 +49,42 @@ func CreateCategory(category string) {
  * - category - the name of the category
  * - image - the path of the image
  */
-func MoveImage(category string, image string) {
-	if _, err := os.Stat("images/categories/" + category); os.IsNotExist(err) {
-		fmt.Println("Creating category folder")
-		os.Mkdir("images/categories/"+category, 0755)
+func MoveImage(category string, imagePath string) {
+	fmt.Println("Image received till functions.go")
+	fmt.Println("Image from: " + imagePath)
+	fmt.Println("Will go to: " + category)
+
+	// get the image path
+	pathToImage := imagePath
+	fmt.Println("Okay, the image path is: " + pathToImage)
+
+	// catory folder path
+	pathToCategory := "images/categories/" + category
+	fmt.Println("Okay, the category path is: " + pathToCategory)
+
+	// get the image name
+	imageName := pathToImage[16:]
+	fmt.Println("Okay, the image name is: " + imageName)
+
+	fmt.Println("Image name: " + imageName)
+	fmt.Println("Path to category: " + pathToCategory)
+
+	if _, err := os.Stat(pathToCategory + "/" + imageName); os.IsNotExist(err) {
+		err := os.Rename(pathToImage, pathToCategory+"/"+imageName)
+		if err != nil {
+			fmt.Println(err)
+		}
+	} else {
+		fmt.Println("File already exists")
 	}
 
-	os.Rename(image, "images/categories/"+category+"/"+image)
 }
 
 /**
  * deleteImage will delete an image from the original folder.
  * - image - the path of the image
  */
-func deleteImage(image string) {
+func DeleteImage(image string) {
 	os.Remove(image)
 }
 

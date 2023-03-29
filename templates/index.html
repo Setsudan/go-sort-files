@@ -5,114 +5,16 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Sort images in categories</title>
-
-    <style>
-      #category-input {
-        position: fixed;
-        bottom: 2rem;
-        left: 2rem;
-        width: 30%;
-        height: 4rem;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        border-bottom: 1px solid black;
-      }
-
-      #category-input__input {
-        width: 100%;
-        height: 100%;
-        font-size: 2rem;
-        padding: 1rem;
-        border: none;
-        border-bottom: 1px solid black;
-      }
-
-      #category-input__input:focus {
-        outline: none;
-      }
-
-      #category-input div {
-        position: absolute;
-        bottom: 80%;
-        left: 0;
-        width: 5rem;
-        height: 4rem;
-        background-color: white;
-        border-top: none;
-        font-weight: bold;
-        padding: 1rem;
-        font-size: 2rem;
-        cursor: pointer;
-      }
-
-      #category-input div:hover {
-        background-color: lightgray;
-      }
-
-      /* Image display */
-      #image-display {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-      }
-
-      #image-display__container {
-        width: 100%;
-        height: 100%;
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        align-items: center;
-      }
-
-      #image-display__container img {
-        width: auto;
-        height: 45vh;
-        object-fit: cover;
-        margin: 0.5rem;
-        border-radius: 12px;
-        cursor: pointer;
-      }
-
-      #image-display__container img:hover {
-        border-radius: 18px;
-      }
-
-      #image-display__container img:focus {
-        outline: none;
-      }
-
-      /* Categories */
-      #categories__container {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        align-items: center;
-        position: fixed;
-        bottom: 0;
-        right: 0;
-        padding: 1rem;
-      }
-
-      #categories__container div {
-        margin: 0.5rem;
-        padding: 0.5rem;
-        font-size: 1.5rem;
-        font-weight: bold;
-        cursor: pointer;
-      }
-    </style>
+    <link rel="stylesheet" href="public/style.css" />
   </head>
   <body>
+    <h1 id="images_left"></h1>
     <!-- Go app -->
     <div id="image-display">
       <div id="image-display__container"></div>
+    </div>
+    <div id="video-display">
+      <div id="video-display__container"></div>
     </div>
     <!-- Input with autocomplete of all the categories -->
     <div id="category-input">
@@ -125,6 +27,8 @@
     <script>
       let images;
       let categories;
+
+      const savedCurrentImageIndex = localStorage.getItem("currentImageIndex");
 
       const category_input = document.getElementById("category-input__input");
 
@@ -154,15 +58,20 @@
         categories.forEach((category) => {
           const category_button = document.createElement("div");
           category_button.innerText = category;
-          /*
-            For now we will just console log the category
-            when clicked
-          */
           category_button.addEventListener("click", (e) => {
-            console.log(e.target.innerText);
+            addImageToCategory(category);
+            nextImage();
           });
           categories_container.appendChild(category_button);
         });
+
+        const delete_button = document.createElement("div");
+        delete_button.innerText = "Delete image";
+        delete_button.addEventListener("click", (e) => {
+          deleteImage();
+        });
+        delete_button.classList.add("delete-button");
+        categories_container.appendChild(delete_button);
       };
 
       // display one image at a time
@@ -172,18 +81,118 @@
         const image_display = document.getElementById(
           "image-display__container"
         );
+        const video_display = document.getElementById(
+          "video-display__container"
+        );
+
+        // clear the image display
+        image_display.innerHTML = "";
+        video_display.innerHTML = "";
+
+        if (images[currentImageIndex].includes(".mp4")) {
+          const video = document.createElement("video");
+          video.src = images[currentImageIndex];
+          video.controls = true;
+          video_display.appendChild(video);
+          return;
+        }
         const image = document.createElement("img");
         image.src = images[currentImageIndex];
-        image.addEventListener("click", (e) => {
-          currentImageIndex++;
-          if (currentImageIndex >= images.length) {
-            currentImageIndex = 0;
-          }
-          image_display.removeChild(image);
-          display_images();
-        });
         image_display.appendChild(image);
       }
+
+      const nextImage = () => {
+        currentImageIndex++;
+        if (currentImageIndex >= images.length) {
+          console.log("no more images");
+          // prompt the user if he wants to download the zip file
+          const download = confirm("Download the zip file?");
+          if (download) {
+            window.location.href = "/download";
+          }
+        }
+        display_images();
+        localStorage.setItem("currentImageIndex", currentImageIndex);
+        console.log("saved currentImageIndex: " + currentImageIndex);
+        imagesLeft();
+      };
+
+      const getCurrentDisplayedImage = () => {
+        return images[currentImageIndex];
+      };
+
+      const addImageToCategory = (category) => {
+        const image = getCurrentDisplayedImage();
+        let formData = new FormData();
+        formData.append("image", image);
+        formData.append("category", category);
+
+        console.log(
+          "adding image: " + image + " to category: " + category + "..."
+        );
+
+        fetch("/dispatch", {
+          method: "POST",
+          body: formData,
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            console.log(data);
+          });
+      };
+
+      // event listener to key "enter" to add the image to the category if input is not empty and longer than 2 characters
+      category_input.addEventListener("keyup", (e) => {
+        if (e.key === "Enter") {
+          const category = e.target.value;
+          addImageToCategory(category);
+          e.target.value = "";
+          // refresh the categories
+          fetch("/categories/get")
+            .then((response) => response.json())
+            .then((data) => {
+              categories = data;
+            })
+            .finally(() => {
+              // clear the categories
+              const categories_container = document.getElementById(
+                "categories__container"
+              );
+              categories_container.innerHTML = "";
+              create_categories_button();
+              nextImage();
+            });
+        }
+      });
+
+      const deleteImage = () => {
+        const image = getCurrentDisplayedImage();
+        let formData = new FormData();
+        formData.append("image", image);
+        formData.append("category", "delete");
+
+        console.log("deleting image: " + image + "...");
+
+        // same as adding to category but the category is "delete"
+        fetch("/dispatch", {
+          method: "POST",
+          body: formData,
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            console.log(data);
+          })
+          .finally(() => {
+            nextImage();
+          });
+      };
+
+      const imagesLeft = () => {
+        const images_left = document.getElementById("images_left");
+        images_left.innerText = `${
+          images.length - currentImageIndex
+        } images left`;
+      };
     </script>
   </body>
 </html>

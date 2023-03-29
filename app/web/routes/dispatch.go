@@ -23,16 +23,44 @@ import (
 func Dispatch(c *gin.Context) {
 	// get the category name
 	category := c.PostForm("category")
-	// get the image path
-	image, _ := c.FormFile("image")
+	// get the image path (string path to the file)
+	imagePath := c.PostForm("image")
 
+	// check if the category is not empty
+	if category == "" {
+		// return a json response
+		c.JSON(200, gin.H{
+			"message": "Category is empty",
+		})
+		return
+	}
+
+	// if category is delete then delete the image
+	if category == "delete" {
+		// delete the image from the original folder
+		app.DeleteImage(imagePath)
+
+		// return a json response
+		c.JSON(200, gin.H{
+			"message": "Image deleted",
+		})
+
+		return
+	}
+
+	fmt.Println("creating category: " + category + "")
 	// create the category folder if it doesn't exist
 	app.CreateCategory(category)
 
-	// move the image to the category folder
-	err := c.SaveUploadedFile(image, "images/categories/"+category+"/"+image.Filename)
-	if err != nil {
-		fmt.Println(err)
-	}
+	fmt.Println("moving image to category folder")
+	// move the image(we have it's current path) to the category folder
+	app.MoveImage(category, imagePath)
+
+	fmt.Println("image moved to category folder")
+	// return a json response
+	c.JSON(200, gin.H{
+		"message": "Image moved",
+		"wrote":   "to " + category + " folder",
+	})
 
 }

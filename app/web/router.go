@@ -45,8 +45,14 @@ func Router() {
 	// serve all the images from the original folder
 	router.StaticFS("/images/original", http.Dir("images/original"))
 
+	// serve every file in public folder
+	router.StaticFS("/public", http.Dir("public"))
+
 	// get all the categories
 	router.GET("/categories/get", routes.GetCategories)
+
+	// compress the categories folder into a zip and download it
+	router.GET("/categories/download", routes.DownloadCategories)
 
 	// start the server
 	fmt.Println("Server started on port 3000")
