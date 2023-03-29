@@ -87,6 +87,26 @@
       #image-display__container img:focus {
         outline: none;
       }
+
+      /* Categories */
+      #categories__container {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: center;
+        position: fixed;
+        bottom: 0;
+        right: 0;
+        padding: 1rem;
+      }
+
+      #categories__container div {
+        margin: 0.5rem;
+        padding: 0.5rem;
+        font-size: 1.5rem;
+        font-weight: bold;
+        cursor: pointer;
+      }
     </style>
   </head>
   <body>
@@ -97,6 +117,9 @@
     <!-- Input with autocomplete of all the categories -->
     <div id="category-input">
       <input type="text" id="category-input__input" />
+    </div>
+    <div id="categories">
+      <div id="categories__container"></div>
     </div>
 
     <script>
@@ -118,29 +141,29 @@
         .then((response) => response.json())
         .then((data) => {
           categories = data;
+        })
+        .finally(() => {
+          create_categories_button();
         });
 
-      // add autocomplete to the input
-      category_input.addEventListener("input", (e) => {
-        const input = e.target.value;
-        // clear previous divs
-        const divs = document.querySelectorAll("#category-input div");
-        divs.forEach((div) => {
-          div.parentNode.removeChild(div);
-        });
-        const filtered_categories = categories.filter((category) => {
-          return category.includes(input);
-        });
-        // add a clickable div for each category under the input
-        filtered_categories.forEach((category) => {
-          const category_div = document.createElement("div");
-          category_div.innerHTML = category;
-          category_div.addEventListener("click", (e) => {
-            category_input.value = e.target.innerHTML;
+      // append all the categories to the categories div
+      const create_categories_button = () => {
+        const categories_container = document.getElementById(
+          "categories__container"
+        );
+        categories.forEach((category) => {
+          const category_button = document.createElement("div");
+          category_button.innerText = category;
+          /*
+            For now we will just console log the category
+            when clicked
+          */
+          category_button.addEventListener("click", (e) => {
+            console.log(e.target.innerText);
           });
-          category_input.parentNode.appendChild(category_div);
+          categories_container.appendChild(category_button);
         });
-      });
+      };
 
       // display one image at a time
       // when clicked go to the next image
