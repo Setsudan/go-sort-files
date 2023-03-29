@@ -14,3 +14,14 @@ package main
  Here we will only create a new router and start the server.
  So we only need gin, net/http, and fmt packages.
 */
+
+import (
+	"fmt"
+
+	"main/go-sort-files/app/web"
+)
+
+func main() {
+	fmt.Println("Starting server...")
+	web.Router()
+}

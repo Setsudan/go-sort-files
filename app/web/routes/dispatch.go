@@ -13,7 +13,6 @@ The form will have the following fields :
 
 import (
 	"fmt"
-	"net/http"
 
 	"github.com/gin-gonic/gin"
 
@@ -21,27 +20,19 @@ import (
 )
 
 // dispatch handles the form submission
-func dispatch(c *gin.Context) {
-	// get the image file
-	image, err := c.FormFile("image")
-	if err != nil {
-		c.String(http.StatusBadRequest, fmt.Sprintf("get form err: %s", err.Error()))
-		return
-	}
-
+func Dispatch(c *gin.Context) {
 	// get the category name
 	category := c.PostForm("category")
+	// get the image path
+	image, _ := c.FormFile("image")
 
-	// create the category folder
+	// create the category folder if it doesn't exist
 	app.CreateCategory(category)
 
 	// move the image to the category folder
-	// the image will be moved to the original folder
-	// and then moved to the category folder
-	// so we can use the original folder to delete the images
-	// if we want to
-	app.MoveImage(category, image.Filename)
+	err := c.SaveUploadedFile(image, "images/categories/"+category+"/"+image.Filename)
+	if err != nil {
+		fmt.Println(err)
+	}
 
-	// redirect to the main page
-	c.Redirect(http.StatusMovedPermanently, "/")
 }

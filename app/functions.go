@@ -74,3 +74,39 @@ func MoveImage(category string, image string) {
 func deleteImage(image string) {
 	os.Remove(image)
 }
+
+/**
+ * getImages will return a list of all the images(path to image) in the original folder.
+ */
+func GetImages() []string {
+	var images []string
+
+	files, err := os.ReadDir("images/original")
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	for _, file := range files {
+		images = append(images, "images/original/"+file.Name())
+	}
+
+	return images
+}
+
+/**
+ * getCategories will return a list of all the categories in the categories folder.
+ */
+func GetCategories() []string {
+	var categories []string
+
+	files, err := os.ReadDir("images/categories")
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	for _, file := range files {
+		categories = append(categories, file.Name())
+	}
+
+	return categories
+}

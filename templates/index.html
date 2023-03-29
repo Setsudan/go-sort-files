@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sort images in categories</title>
+
+    <style>
+      #category-input {
+        position: fixed;
+        bottom: 2rem;
+        left: 2rem;
+        width: 30%;
+        height: 4rem;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border-bottom: 1px solid black;
+      }
+
+      #category-input__input {
+        width: 100%;
+        height: 100%;
+        font-size: 2rem;
+        padding: 1rem;
+        border: none;
+        border-bottom: 1px solid black;
+      }
+
+      #category-input__input:focus {
+        outline: none;
+      }
+
+      #category-input div {
+        position: absolute;
+        bottom: 80%;
+        left: 0;
+        width: 5rem;
+        height: 4rem;
+        background-color: white;
+        border-top: none;
+        font-weight: bold;
+        padding: 1rem;
+        font-size: 2rem;
+        cursor: pointer;
+      }
+
+      #category-input div:hover {
+        background-color: lightgray;
+      }
+
+      /* Image display */
+      #image-display {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      #image-display__container {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: center;
+      }
+
+      #image-display__container img {
+        width: auto;
+        height: 45vh;
+        object-fit: cover;
+        margin: 0.5rem;
+        border-radius: 12px;
+        cursor: pointer;
+      }
+
+      #image-display__container img:hover {
+        border-radius: 18px;
+      }
+
+      #image-display__container img:focus {
+        outline: none;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Go app -->
+    <div id="image-display">
+      <div id="image-display__container"></div>
+    </div>
+    <!-- Input with autocomplete of all the categories -->
+    <div id="category-input">
+      <input type="text" id="category-input__input" />
+    </div>
+
+    <script>
+      let images;
+      let categories;
+
+      const category_input = document.getElementById("category-input__input");
+
+      fetch("/images/get")
+        .then((response) => response.json())
+        .then((data) => {
+          images = data.images;
+        })
+        .finally(() => {
+          display_images();
+        });
+
+      fetch("/categories/get")
+        .then((response) => response.json())
+        .then((data) => {
+          categories = data;
+        });
+
+      // add autocomplete to the input
+      category_input.addEventListener("input", (e) => {
+        const input = e.target.value;
+        // clear previous divs
+        const divs = document.querySelectorAll("#category-input div");
+        divs.forEach((div) => {
+          div.parentNode.removeChild(div);
+        });
+        const filtered_categories = categories.filter((category) => {
+          return category.includes(input);
+        });
+        // add a clickable div for each category under the input
+        filtered_categories.forEach((category) => {
+          const category_div = document.createElement("div");
+          category_div.innerHTML = category;
+          category_div.addEventListener("click", (e) => {
+            category_input.value = e.target.innerHTML;
+          });
+          category_input.parentNode.appendChild(category_div);
+        });
+      });
+
+      // display one image at a time
+      // when clicked go to the next image
+      let currentImageIndex = 0;
+      function display_images() {
+        const image_display = document.getElementById(
+          "image-display__container"
+        );
+        const image = document.createElement("img");
+        image.src = images[currentImageIndex];
+        image.addEventListener("click", (e) => {
+          currentImageIndex++;
+          if (currentImageIndex >= images.length) {
+            currentImageIndex = 0;
+          }
+          image_display.removeChild(image);
+          display_images();
+        });
+        image_display.appendChild(image);
+      }
+    </script>
+  </body>
+</html>

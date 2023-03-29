@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"main/go-sort-files/app/web/routes"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -18,6 +20,7 @@ import (
  routes :
  	- `GET` `/` - serves the main web page with an image and an input field
 	- `POST` `/dispatch` - handles the input field form submission and moves the image to a subfolder with the category name
+	- `GET` `/images/get` - give a list of all the images in the original folder
 	- `GET` `/images/categories` - give a list of all the categories
 	- `GET` `/images/categories/:category` - give a list of all the images in a category
 	- `GET` `/images/categories/:category/:image` - serves an image from a category
@@ -26,7 +29,7 @@ import (
 // each route will have a function on their own file
 // so for now we comment the lines where the functions are called
 
-func router() {
+func Router() {
 	// create a new router
 	router := gin.Default()
 
@@ -34,18 +37,16 @@ func router() {
 	router.GET("/", index)
 
 	// handle the form submission
-	// router.POST("/dispatch", dispatch)
+	router.POST("/dispatch", routes.Dispatch)
 
-	// serve the categories
-	// all the categories are on a json file
-	// in the images/categories/all_categories.json
-	// router.GET("/images/categories", categories)
+	// get all the images
+	router.GET("/images/get", routes.GetImages)
 
-	// serve the images from a category
-	// router.GET("/images/categories/:category", images)
+	// serve all the images from the original folder
+	router.StaticFS("/images/original", http.Dir("images/original"))
 
-	// serve an image
-	// router.GET("/images/categories/:category/:image", image)
+	// get all the categories
+	router.GET("/categories/get", routes.GetCategories)
 
 	// start the server
 	fmt.Println("Server started on port 3000")
@@ -53,7 +54,11 @@ func router() {
 }
 
 // index serves the main page
-// the html file is on app/web/html/index.html
 func index(c *gin.Context) {
-	c.HTML(http.StatusOK, "index.html", gin.H{})
+	// the html file is supposed to be in /templates/index.html in the project folder
+	file := "templates/index.html"
+	c.File(file)
+
+	// serve the main page
+	c.HTML(http.StatusOK, file, gin.H{})
 }
