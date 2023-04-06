@@ -11,6 +11,7 @@ The Image Dispatcher Web App includes the following features:
 - Supports multiple image file types, including PNG, JPG, and GIF
 - Support Videos
 
+
 ## Endpoints
 The Image Dispatcher Web App includes the following endpoints:
 

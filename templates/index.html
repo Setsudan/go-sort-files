@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sort images in categories</title>
+    <link rel="stylesheet" href="public/style.css" />
+  </head>
+  <body>
+    <h1 id="images_left"></h1>
+    <!-- Go app -->
+    <div id="image-display">
+      <div id="image-display__container"></div>
+    </div>
+    <div id="video-display">
+      <div id="video-display__container"></div>
+    </div>
+    <!-- Input with autocomplete of all the categories -->
+    <div id="category-input">
+      <input type="text" id="category-input__input" />
+    </div>
+    <div id="categories">
+      <div id="categories__container"></div>
+    </div>
+
+    <script>
+      let images;
+      let categories;
+
+      const savedCurrentImageIndex = localStorage.getItem("currentImageIndex");
+
+      const category_input = document.getElementById("category-input__input");
+
+      fetch("/images/get")
+        .then((response) => response.json())
+        .then((data) => {
+          images = data.images;
+        })
+        .finally(() => {
+          display_images();
+        });
+
+      fetch("/categories/get")
+        .then((response) => response.json())
+        .then((data) => {
+          categories = data;
+        })
+        .finally(() => {
+          create_categories_button();
+        });
+
+      // append all the categories to the categories div
+      const create_categories_button = () => {
+        const categories_container = document.getElementById(
+          "categories__container"
+        );
+        categories.forEach((category) => {
+          const category_button = document.createElement("div");
+          category_button.innerText = category;
+          category_button.addEventListener("click", (e) => {
+            addImageToCategory(category);
+            nextImage();
+          });
+          categories_container.appendChild(category_button);
+        });
+
+        const delete_button = document.createElement("div");
+        delete_button.innerText = "Delete image";
+        delete_button.addEventListener("click", (e) => {
+          deleteImage();
+        });
+        delete_button.classList.add("delete-button");
+        categories_container.appendChild(delete_button);
+      };
+
+      // display one image at a time
+      // when clicked go to the next image
+      let currentImageIndex = 0;
+      function display_images() {
+        const image_display = document.getElementById(
+          "image-display__container"
+        );
+        const video_display = document.getElementById(
+          "video-display__container"
+        );
+
+        // clear the image display
+        image_display.innerHTML = "";
+        video_display.innerHTML = "";
+
+        if (images[currentImageIndex].includes(".mp4")) {
+          const video = document.createElement("video");
+          video.src = images[currentImageIndex];
+          video.controls = true;
+          video_display.appendChild(video);
+          return;
+        }
+        const image = document.createElement("img");
+        image.src = images[currentImageIndex];
+        image_display.appendChild(image);
+      }
+
+      const nextImage = () => {
+        currentImageIndex++;
+        if (currentImageIndex >= images.length) {
+          console.log("no more images");
+          // prompt the user if he wants to download the zip file
+          const download = confirm("Download the zip file?");
+          if (download) {
+            window.location.href = "/download";
+          }
+        }
+        display_images();
+        localStorage.setItem("currentImageIndex", currentImageIndex);
+        console.log("saved currentImageIndex: " + currentImageIndex);
+        imagesLeft();
+      };
+
+      const getCurrentDisplayedImage = () => {
+        return images[currentImageIndex];
+      };
+
+      const addImageToCategory = (category) => {
+        const image = getCurrentDisplayedImage();
+        let formData = new FormData();
+        formData.append("image", image);
+        formData.append("category", category);
+
+        console.log(
+          "adding image: " + image + " to category: " + category + "..."
+        );
+
+        fetch("/dispatch", {
+          method: "POST",
+          body: formData,
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            console.log(data);
+          });
+      };
+
+      // event listener to key "enter" to add the image to the category if input is not empty and longer than 2 characters
+      category_input.addEventListener("keyup", (e) => {
+        if (e.key === "Enter") {
+          const category = e.target.value;
+          addImageToCategory(category);
+          e.target.value = "";
+          // refresh the categories
+          fetch("/categories/get")
+            .then((response) => response.json())
+            .then((data) => {
+              categories = data;
+            })
+            .finally(() => {
+              // clear the categories
+              const categories_container = document.getElementById(
+                "categories__container"
+              );
+              categories_container.innerHTML = "";
+              create_categories_button();
+              nextImage();
+            });
+        }
+      });
+
+      const deleteImage = () => {
+        const image = getCurrentDisplayedImage();
+        let formData = new FormData();
+        formData.append("image", image);
+        formData.append("category", "delete");
+
+        console.log("deleting image: " + image + "...");
+
+        // same as adding to category but the category is "delete"
+        fetch("/dispatch", {
+          method: "POST",
+          body: formData,
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            console.log(data);
+          })
+          .finally(() => {
+            nextImage();
+          });
+      };
+
+      const imagesLeft = () => {
+        const images_left = document.getElementById("images_left");
+        images_left.innerText = `${
+          images.length - currentImageIndex
+        } images left`;
+      };
+    </script>
+  </body>
+</html>
