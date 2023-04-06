@@ -6,17 +6,10 @@ The Image Dispatcher Web App is a Go web app that allows users to categorize and
 The Image Dispatcher Web App includes the following features:
 
 - Displays one image at a time
-- Input field with autocomplete to create a category for the image
+- Input field to create a category for the image
 - Creates a subfolder with the category name and moves the image to that folder
 - Supports multiple image file types, including PNG, JPG, and GIF
-
-## Architecture
-The Image Dispatcher Web App is built using the following components:
-
-- Gin web framework for serving web pages and handling HTTP requests
-- fsnotify package for watching the file system for changes
-- Goroutine to handle multiple requests simultaneously
-- os.Rename function to move images to subfolders
+- Support Videos
 
 ## Endpoints
 The Image Dispatcher Web App includes the following endpoints:
